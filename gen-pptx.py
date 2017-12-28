@@ -1,7 +1,12 @@
+import json
+from pprint import pprint
+
+import chardet
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
+
 from operateSlide import move_slide, duplicate_slide
 from mergeCell import mergeCellsVertically, mergeCellsHorizontally, mergeCells
 
@@ -20,9 +25,9 @@ def setup_presentor(presentation, presenter):
     shape.text_frame.paragraphs[0].runs[0].font.brightness = -0.35
 
 
-def cal_num_of_past_missions_slide(missions):
-    num_of_slide = int(len(missions) / 3)
-    if (len(missions) % 3) > 0:
+def cal_num_of_past_missions_slide(missions, one_page_mission_count):
+    num_of_slide = int(len(missions) / one_page_mission_count)
+    if (len(missions) % one_page_mission_count) > 0:
         num_of_slide += 1
 
     if num_of_slide == 0:
@@ -257,7 +262,7 @@ def setup_past_missions(presentation, missions, host, presenter):
             table.cell(5+idx, 2).vertical_anchor = MSO_ANCHOR.MIDDLE
             table.cell(5+idx, 2).text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
             table.cell(5+idx, 2).text_frame.paragraphs[0].add_run()
-            table.cell(5+idx, 2).text_frame.paragraphs[0].runs[0].text = mission['type']
+            table.cell(5+idx, 2).text_frame.paragraphs[0].runs[0].text = mission['zh_type']
             table.cell(5+idx, 2).text_frame.paragraphs[0].runs[0].font.name = 'DFKai-SB'
             table.cell(5+idx, 2).text_frame.paragraphs[0].runs[0].font.size = Pt(16)
             table.cell(5+idx, 2).text_frame.paragraphs[0].runs[0].font.bold = True
@@ -285,7 +290,7 @@ def setup_past_missions(presentation, missions, host, presenter):
             table.cell(5+idx, 6).vertical_anchor = MSO_ANCHOR.MIDDLE
             table.cell(5+idx, 6).text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
             table.cell(5+idx, 6).text_frame.paragraphs[0].add_run()
-            table.cell(5+idx, 6).text_frame.paragraphs[0].runs[0].text = mission['time']
+            table.cell(5+idx, 6).text_frame.paragraphs[0].runs[0].text = f'{mission["time"]}\n{mission["note"]}'
             table.cell(5+idx, 6).text_frame.paragraphs[0].runs[0].font.name = 'DFKai-SB'
             table.cell(5+idx, 6).text_frame.paragraphs[0].runs[0].font.size = Pt(16)
             table.cell(5+idx, 6).text_frame.paragraphs[0].runs[0].font.bold = True
@@ -392,7 +397,7 @@ def setup_today_missions(presentation, start_slide_idx, missions):
             table.cell(1+idx, 1).vertical_anchor = MSO_ANCHOR.MIDDLE
             table.cell(1+idx, 1).text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
             table.cell(1+idx, 1).text_frame.paragraphs[0].add_run()
-            table.cell(1+idx, 1).text_frame.paragraphs[0].runs[0].text = mission['type']
+            table.cell(1+idx, 1).text_frame.paragraphs[0].runs[0].text = mission['zh_type']
             table.cell(1+idx, 1).text_frame.paragraphs[0].runs[0].font.name = 'DFKai-SB'
             table.cell(1+idx, 1).text_frame.paragraphs[0].runs[0].font.size = Pt(14)
             table.cell(1+idx, 1).text_frame.paragraphs[0].runs[0].font.bold = True
@@ -418,7 +423,7 @@ def setup_today_missions(presentation, start_slide_idx, missions):
             table.cell(1+idx, 3).vertical_anchor = MSO_ANCHOR.MIDDLE
             table.cell(1+idx, 3).text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
             table.cell(1+idx, 3).text_frame.paragraphs[0].add_run()
-            table.cell(1+idx, 3).text_frame.paragraphs[0].runs[0].text = mission['time']
+            table.cell(1+idx, 3).text_frame.paragraphs[0].runs[0].text = f'{mission["time"]}\n{mission["note"]}'
             table.cell(1+idx, 3).text_frame.paragraphs[0].runs[0].font.name = 'DFKai-SB'
             table.cell(1+idx, 3).text_frame.paragraphs[0].runs[0].font.size = Pt(14)
             table.cell(1+idx, 3).text_frame.paragraphs[0].runs[0].font.bold = True
@@ -426,12 +431,329 @@ def setup_today_missions(presentation, start_slide_idx, missions):
             table.cell(1+idx, 3).text_frame.paragraphs[0].runs[0].font.brightness = 0
 
 
+def setup_plane_status(presentation, start_slide_idx, plane_status_list):
+    slide = presentation.slides[start_slide_idx]
+
+    rows = 1 + len(plane_status_list)
+    cols = 11
+    left = Inches(0)
+    top = Inches(0.71)
+    width = Inches(10)
+    height = Inches(5)
+
+    shapes = slide.shapes
+    table = shapes.add_table(rows, cols, left, top, width, height).table
+    table.columns[0].width = Inches(0.97)
+    table.columns[1].width = Inches(0.85)
+    table.columns[2].width = Inches(1.22)
+    table.columns[3].width = Inches(0.9)
+    table.columns[4].width = Inches(0.74)
+    table.columns[5].width = Inches(1.16)
+    table.columns[6].width = Inches(1.08)
+    table.columns[7].width = Inches(1.01)
+    table.columns[8].width = Inches(0.58)
+    table.columns[9].width = Inches(0.68)
+    table.columns[10].width = Inches(0.8)
+
+    table.rows[0].height = Inches(1.17)
+
+    # cell 0, 0
+    table.cell(0, 0).text_frame.clear()
+    table.cell(0, 0).fill.background()
+    table.cell(0, 0).vertical_anchor = MSO_ANCHOR.MIDDLE
+    table.cell(0, 0).text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+    table.cell(0, 0).text_frame.paragraphs[0].add_run()
+    table.cell(0, 0).text_frame.paragraphs[0].runs[0].text = '機號'
+    table.cell(0, 0).text_frame.paragraphs[0].runs[0].font.name = 'DFKai-SB'
+    table.cell(0, 0).text_frame.paragraphs[0].runs[0].font.size = Pt(16)
+    table.cell(0, 0).text_frame.paragraphs[0].runs[0].font.bold = True
+    table.cell(0, 0).text_frame.paragraphs[0].runs[0].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+    table.cell(0, 0).text_frame.paragraphs[0].runs[0].font.brightness = 0
+
+    # cell 0, 1
+    table.cell(0, 1).text_frame.clear()
+    table.cell(0, 1).fill.background()
+    table.cell(0, 1).vertical_anchor = MSO_ANCHOR.MIDDLE
+    table.cell(0, 1).text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+    table.cell(0, 1).text_frame.paragraphs[0].add_run()
+    table.cell(0, 1).text_frame.paragraphs[0].runs[0].text = '狀況'
+    table.cell(0, 1).text_frame.paragraphs[0].runs[0].font.name = 'DFKai-SB'
+    table.cell(0, 1).text_frame.paragraphs[0].runs[0].font.size = Pt(16)
+    table.cell(0, 1).text_frame.paragraphs[0].runs[0].font.bold = True
+    table.cell(0, 1).text_frame.paragraphs[0].runs[0].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+    table.cell(0, 1).text_frame.paragraphs[0].runs[0].font.brightness = 0
+
+    # cell 0, 2
+    table.cell(0, 2).text_frame.clear()
+    table.cell(0, 2).fill.background()
+    table.cell(0, 2).vertical_anchor = MSO_ANCHOR.MIDDLE
+    table.cell(0, 2).text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+    table.cell(0, 2).text_frame.paragraphs[0].add_run()
+    table.cell(0, 2).text_frame.paragraphs[0].runs[0].text = '檢修日期'
+    table.cell(0, 2).text_frame.paragraphs[0].runs[0].font.name = 'DFKai-SB'
+    table.cell(0, 2).text_frame.paragraphs[0].runs[0].font.size = Pt(16)
+    table.cell(0, 2).text_frame.paragraphs[0].runs[0].font.bold = True
+    table.cell(0, 2).text_frame.paragraphs[0].runs[0].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+    table.cell(0, 2).text_frame.paragraphs[0].runs[0].font.brightness = 0
+
+    # cell 0, 3
+    table.cell(0, 3).text_frame.clear()
+    table.cell(0, 3).fill.background()
+    table.cell(0, 3).vertical_anchor = MSO_ANCHOR.MIDDLE
+    table.cell(0, 3).text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+    table.cell(0, 3).text_frame.paragraphs[0].add_run()
+    table.cell(0, 3).text_frame.paragraphs[0].runs[0].text = '位置'
+    table.cell(0, 3).text_frame.paragraphs[0].runs[0].font.name = 'DFKai-SB'
+    table.cell(0, 3).text_frame.paragraphs[0].runs[0].font.size = Pt(16)
+    table.cell(0, 3).text_frame.paragraphs[0].runs[0].font.bold = True
+    table.cell(0, 3).text_frame.paragraphs[0].runs[0].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+    table.cell(0, 3).text_frame.paragraphs[0].runs[0].font.brightness = 0
+
+    # cell 0, 4
+    table.cell(0, 4).text_frame.clear()
+    table.cell(0, 4).fill.background()
+    table.cell(0, 4).vertical_anchor = MSO_ANCHOR.MIDDLE
+    table.cell(0, 4).text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+    table.cell(0, 4).text_frame.paragraphs[0].add_run()
+    table.cell(0, 4).text_frame.paragraphs[0].runs[0].text = '前日飛行時間'
+    table.cell(0, 4).text_frame.paragraphs[0].runs[0].font.name = 'DFKai-SB'
+    table.cell(0, 4).text_frame.paragraphs[0].runs[0].font.size = Pt(16)
+    table.cell(0, 4).text_frame.paragraphs[0].runs[0].font.bold = True
+    table.cell(0, 4).text_frame.paragraphs[0].runs[0].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+    table.cell(0, 4).text_frame.paragraphs[0].runs[0].font.brightness = 0
+
+    # cell 0, 5
+    table.cell(0, 5).text_frame.clear()
+    table.cell(0, 5).fill.background()
+    table.cell(0, 5).vertical_anchor = MSO_ANCHOR.MIDDLE
+    table.cell(0, 5).text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+    table.cell(0, 5).text_frame.paragraphs[0].add_run()
+    table.cell(0, 5).text_frame.paragraphs[0].runs[0].text = '飛機時間'
+    table.cell(0, 5).text_frame.paragraphs[0].runs[0].font.name = 'DFKai-SB'
+    table.cell(0, 5).text_frame.paragraphs[0].runs[0].font.size = Pt(16)
+    table.cell(0, 5).text_frame.paragraphs[0].runs[0].font.bold = True
+    table.cell(0, 5).text_frame.paragraphs[0].runs[0].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+    table.cell(0, 5).text_frame.paragraphs[0].runs[0].font.brightness = 0
+
+    # cell 0, 6
+    table.cell(0, 6).text_frame.clear()
+    table.cell(0, 6).fill.background()
+    table.cell(0, 6).vertical_anchor = MSO_ANCHOR.MIDDLE
+    table.cell(0, 6).text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+    table.cell(0, 6).text_frame.paragraphs[0].add_run()
+    table.cell(0, 6).text_frame.paragraphs[0].runs[0].text = '發動機時間'
+    table.cell(0, 6).text_frame.paragraphs[0].runs[0].font.name = 'DFKai-SB'
+    table.cell(0, 6).text_frame.paragraphs[0].runs[0].font.size = Pt(16)
+    table.cell(0, 6).text_frame.paragraphs[0].runs[0].font.bold = True
+    table.cell(0, 6).text_frame.paragraphs[0].runs[0].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+    table.cell(0, 6).text_frame.paragraphs[0].runs[0].font.brightness = 0
+
+    # cell 0, 7
+    table.cell(0, 7).text_frame.clear()
+    table.cell(0, 7).fill.background()
+    table.cell(0, 7).vertical_anchor = MSO_ANCHOR.MIDDLE
+    table.cell(0, 7).text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+    table.cell(0, 7).text_frame.paragraphs[0].add_run()
+    table.cell(0, 7).text_frame.paragraphs[0].runs[0].text = '距週(階)檢時間'
+    table.cell(0, 7).text_frame.paragraphs[0].runs[0].font.name = 'DFKai-SB'
+    table.cell(0, 7).text_frame.paragraphs[0].runs[0].font.size = Pt(16)
+    table.cell(0, 7).text_frame.paragraphs[0].runs[0].font.bold = True
+    table.cell(0, 7).text_frame.paragraphs[0].runs[0].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+    table.cell(0, 7).text_frame.paragraphs[0].runs[0].font.brightness = 0
+
+    # cell 0, 8
+    table.cell(0, 8).text_frame.clear()
+    table.cell(0, 8).fill.background()
+    table.cell(0, 8).vertical_anchor = MSO_ANCHOR.MIDDLE
+    table.cell(0, 8).text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+    table.cell(0, 8).text_frame.paragraphs[0].add_run()
+    table.cell(0, 8).text_frame.paragraphs[0].runs[0].text = '人員吊掛'
+    table.cell(0, 8).text_frame.paragraphs[0].runs[0].font.name = 'DFKai-SB'
+    table.cell(0, 8).text_frame.paragraphs[0].runs[0].font.size = Pt(16)
+    table.cell(0, 8).text_frame.paragraphs[0].runs[0].font.bold = True
+    table.cell(0, 8).text_frame.paragraphs[0].runs[0].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+    table.cell(0, 8).text_frame.paragraphs[0].runs[0].font.brightness = 0
+
+    # cell 0, 9
+    table.cell(0, 9).text_frame.clear()
+    table.cell(0, 9).fill.background()
+    table.cell(0, 9).vertical_anchor = MSO_ANCHOR.MIDDLE
+    table.cell(0, 9).text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+    table.cell(0, 9).text_frame.paragraphs[0].add_run()
+    table.cell(0, 9).text_frame.paragraphs[0].runs[0].text = '緊急浮筒'
+    table.cell(0, 9).text_frame.paragraphs[0].runs[0].font.name = 'DFKai-SB'
+    table.cell(0, 9).text_frame.paragraphs[0].runs[0].font.size = Pt(16)
+    table.cell(0, 9).text_frame.paragraphs[0].runs[0].font.bold = True
+    table.cell(0, 9).text_frame.paragraphs[0].runs[0].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+    table.cell(0, 9).text_frame.paragraphs[0].runs[0].font.brightness = 0
+
+    # cell 0, 10
+    table.cell(0, 10).text_frame.clear()
+    table.cell(0, 10).fill.background()
+    table.cell(0, 10).vertical_anchor = MSO_ANCHOR.MIDDLE
+    table.cell(0, 10).text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+    table.cell(0, 10).text_frame.paragraphs[0].add_run()
+    table.cell(0, 10).text_frame.paragraphs[0].runs[0].text = '油量'
+    table.cell(0, 10).text_frame.paragraphs[0].runs[0].font.name = 'DFKai-SB'
+    table.cell(0, 10).text_frame.paragraphs[0].runs[0].font.size = Pt(16)
+    table.cell(0, 10).text_frame.paragraphs[0].runs[0].font.bold = True
+    table.cell(0, 10).text_frame.paragraphs[0].runs[0].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+    table.cell(0, 10).text_frame.paragraphs[0].runs[0].font.brightness = 0
+
+    for idx, plane_status in enumerate(plane_status_list):
+        # col 0
+        table.cell(1+idx, 0).text_frame.clear()
+        table.cell(1+idx, 0).fill.background()
+        table.cell(1+idx, 0).vertical_anchor = MSO_ANCHOR.MIDDLE
+        table.cell(1+idx, 0).text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+        table.cell(1+idx, 0).text_frame.paragraphs[0].add_run()
+        table.cell(1+idx, 0).text_frame.paragraphs[0].runs[0].text = plane_status['plane-num']
+        table.cell(1+idx, 0).text_frame.paragraphs[0].runs[0].font.name = 'DFKai-SB'
+        table.cell(1+idx, 0).text_frame.paragraphs[0].runs[0].font.size = Pt(16)
+        table.cell(1+idx, 0).text_frame.paragraphs[0].runs[0].font.bold = True
+        table.cell(1+idx, 0).text_frame.paragraphs[0].runs[0].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+        table.cell(1+idx, 0).text_frame.paragraphs[0].runs[0].font.brightness = 0
+
+        # col 1
+        table.cell(1+idx, 1).text_frame.clear()
+        table.cell(1+idx, 1).fill.background()
+        table.cell(1+idx, 1).vertical_anchor = MSO_ANCHOR.MIDDLE
+        table.cell(1+idx, 1).text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+        table.cell(1+idx, 1).text_frame.paragraphs[0].add_run()
+        table.cell(1+idx, 1).text_frame.paragraphs[0].runs[0].text = plane_status['status']
+        table.cell(1+idx, 1).text_frame.paragraphs[0].runs[0].font.name = 'DFKai-SB'
+        table.cell(1+idx, 1).text_frame.paragraphs[0].runs[0].font.size = Pt(16)
+        table.cell(1+idx, 1).text_frame.paragraphs[0].runs[0].font.bold = True
+        table.cell(1+idx, 1).text_frame.paragraphs[0].runs[0].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+        table.cell(1+idx, 1).text_frame.paragraphs[0].runs[0].font.brightness = 0
+
+        # col 2
+        table.cell(1+idx, 2).text_frame.clear()
+        table.cell(1+idx, 2).fill.background()
+        table.cell(1+idx, 2).vertical_anchor = MSO_ANCHOR.MIDDLE
+        table.cell(1+idx, 2).text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+        table.cell(1+idx, 2).text_frame.paragraphs[0].add_run()
+        table.cell(1+idx, 2).text_frame.paragraphs[0].runs[0].text = plane_status['check_date']
+        table.cell(1+idx, 2).text_frame.paragraphs[0].runs[0].font.name = 'DFKai-SB'
+        table.cell(1+idx, 2).text_frame.paragraphs[0].runs[0].font.size = Pt(16)
+        table.cell(1+idx, 2).text_frame.paragraphs[0].runs[0].font.bold = True
+        table.cell(1+idx, 2).text_frame.paragraphs[0].runs[0].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+        table.cell(1+idx, 2).text_frame.paragraphs[0].runs[0].font.brightness = 0
+
+        # col 3
+        table.cell(1+idx, 3).text_frame.clear()
+        table.cell(1+idx, 3).fill.background()
+        table.cell(1+idx, 3).vertical_anchor = MSO_ANCHOR.MIDDLE
+        table.cell(1+idx, 3).text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+        table.cell(1+idx, 3).text_frame.paragraphs[0].add_run()
+        table.cell(1+idx, 3).text_frame.paragraphs[0].runs[0].text = plane_status['position']
+        table.cell(1+idx, 3).text_frame.paragraphs[0].runs[0].font.name = 'DFKai-SB'
+        table.cell(1+idx, 3).text_frame.paragraphs[0].runs[0].font.size = Pt(16)
+        table.cell(1+idx, 3).text_frame.paragraphs[0].runs[0].font.bold = True
+        table.cell(1+idx, 3).text_frame.paragraphs[0].runs[0].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+        table.cell(1+idx, 3).text_frame.paragraphs[0].runs[0].font.brightness = 0
+
+        # col 4
+        table.cell(1+idx, 4).text_frame.clear()
+        table.cell(1+idx, 4).fill.background()
+        table.cell(1+idx, 4).vertical_anchor = MSO_ANCHOR.MIDDLE
+        table.cell(1+idx, 4).text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+        table.cell(1+idx, 4).text_frame.paragraphs[0].add_run()
+        table.cell(1+idx, 4).text_frame.paragraphs[0].runs[0].text = plane_status['yesterday_time']
+        table.cell(1+idx, 4).text_frame.paragraphs[0].runs[0].font.name = 'DFKai-SB'
+        table.cell(1+idx, 4).text_frame.paragraphs[0].runs[0].font.size = Pt(16)
+        table.cell(1+idx, 4).text_frame.paragraphs[0].runs[0].font.bold = True
+        table.cell(1+idx, 4).text_frame.paragraphs[0].runs[0].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+        table.cell(1+idx, 4).text_frame.paragraphs[0].runs[0].font.brightness = 0
+
+        # col 5
+        table.cell(1+idx, 5).text_frame.clear()
+        table.cell(1+idx, 5).fill.background()
+        table.cell(1+idx, 5).vertical_anchor = MSO_ANCHOR.MIDDLE
+        table.cell(1+idx, 5).text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+        table.cell(1+idx, 5).text_frame.paragraphs[0].add_run()
+        table.cell(1+idx, 5).text_frame.paragraphs[0].runs[0].text = plane_status['plane_time']
+        table.cell(1+idx, 5).text_frame.paragraphs[0].runs[0].font.name = 'DFKai-SB'
+        table.cell(1+idx, 5).text_frame.paragraphs[0].runs[0].font.size = Pt(16)
+        table.cell(1+idx, 5).text_frame.paragraphs[0].runs[0].font.bold = True
+        table.cell(1+idx, 5).text_frame.paragraphs[0].runs[0].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+        table.cell(1+idx, 5).text_frame.paragraphs[0].runs[0].font.brightness = 0
+
+        # col 6
+        table.cell(1+idx, 6).text_frame.clear()
+        table.cell(1+idx, 6).fill.background()
+        table.cell(1+idx, 6).vertical_anchor = MSO_ANCHOR.MIDDLE
+        table.cell(1+idx, 6).text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+        table.cell(1+idx, 6).text_frame.paragraphs[0].add_run()
+        table.cell(1+idx, 6).text_frame.paragraphs[0].runs[0].text = plane_status['engine_time']
+        table.cell(1+idx, 6).text_frame.paragraphs[0].runs[0].font.name = 'DFKai-SB'
+        table.cell(1+idx, 6).text_frame.paragraphs[0].runs[0].font.size = Pt(16)
+        table.cell(1+idx, 6).text_frame.paragraphs[0].runs[0].font.bold = True
+        table.cell(1+idx, 6).text_frame.paragraphs[0].runs[0].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+        table.cell(1+idx, 6).text_frame.paragraphs[0].runs[0].font.brightness = 0
+
+        # col 7
+        table.cell(1+idx, 7).text_frame.clear()
+        table.cell(1+idx, 7).fill.background()
+        table.cell(1+idx, 7).vertical_anchor = MSO_ANCHOR.MIDDLE
+        table.cell(1+idx, 7).text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+        table.cell(1+idx, 7).text_frame.paragraphs[0].add_run()
+        table.cell(1+idx, 7).text_frame.paragraphs[0].runs[0].text = plane_status['distance_check_time']
+        table.cell(1+idx, 7).text_frame.paragraphs[0].runs[0].font.name = 'DFKai-SB'
+        table.cell(1+idx, 7).text_frame.paragraphs[0].runs[0].font.size = Pt(16)
+        table.cell(1+idx, 7).text_frame.paragraphs[0].runs[0].font.bold = True
+        table.cell(1+idx, 7).text_frame.paragraphs[0].runs[0].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+        table.cell(1+idx, 7).text_frame.paragraphs[0].runs[0].font.brightness = 0
+
+        # col 8
+        table.cell(1+idx, 8).text_frame.clear()
+        table.cell(1+idx, 8).fill.background()
+        table.cell(1+idx, 8).vertical_anchor = MSO_ANCHOR.MIDDLE
+        table.cell(1+idx, 8).text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+        table.cell(1+idx, 8).text_frame.paragraphs[0].add_run()
+        table.cell(1+idx, 8).text_frame.paragraphs[0].runs[0].text = plane_status['person_hang']
+        table.cell(1+idx, 8).text_frame.paragraphs[0].runs[0].font.name = 'DFKai-SB'
+        table.cell(1+idx, 8).text_frame.paragraphs[0].runs[0].font.size = Pt(16)
+        table.cell(1+idx, 8).text_frame.paragraphs[0].runs[0].font.bold = True
+        table.cell(1+idx, 8).text_frame.paragraphs[0].runs[0].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+        table.cell(1+idx, 8).text_frame.paragraphs[0].runs[0].font.brightness = 0
+
+        # col 9
+        table.cell(1+idx, 9).text_frame.clear()
+        table.cell(1+idx, 9).fill.background()
+        table.cell(1+idx, 9).vertical_anchor = MSO_ANCHOR.MIDDLE
+        table.cell(1+idx, 9).text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+        table.cell(1+idx, 9).text_frame.paragraphs[0].add_run()
+        table.cell(1+idx, 9).text_frame.paragraphs[0].runs[0].text = plane_status['emergency_buoy']
+        table.cell(1+idx, 9).text_frame.paragraphs[0].runs[0].font.name = 'DFKai-SB'
+        table.cell(1+idx, 9).text_frame.paragraphs[0].runs[0].font.size = Pt(16)
+        table.cell(1+idx, 9).text_frame.paragraphs[0].runs[0].font.bold = True
+        table.cell(1+idx, 9).text_frame.paragraphs[0].runs[0].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+        table.cell(1+idx, 9).text_frame.paragraphs[0].runs[0].font.brightness = 0
+
+        # col 10
+        table.cell(1+idx, 10).text_frame.clear()
+        table.cell(1+idx, 10).fill.background()
+        table.cell(1+idx, 10).vertical_anchor = MSO_ANCHOR.MIDDLE
+        table.cell(1+idx, 10).text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+
+
 if __name__ == '__main__':
+    input_encoding = chardet.detect(open('pptx_input.json', 'rb').read())['encoding']
+    input_json = json.load(open('pptx_input.json', 'r', encoding=input_encoding))
+
+    past_missions = input_json['past_missions']
+    today_missions = input_json['today_missions']
+    plane_status_list = input_json['plane_status_list']
+
+    pprint(plane_status_list)
+
     prs = Presentation('./template.pptx')
-    past_missions = list()
     setup_past_missions(prs, past_missions, 'somebody', 'somebody')
 
-    start_today_slide_idx = 2 + cal_num_of_past_missions_slide(past_missions)
-    today_missions = list()
+    start_today_slide_idx = 2 + cal_num_of_past_missions_slide(past_missions, 3)
     setup_today_missions(prs, start_today_slide_idx, today_missions)
+
+    start_plane_status_slide_idx = start_today_slide_idx + cal_num_of_past_missions_slide(today_missions, 6)
+    setup_plane_status(prs, start_plane_status_slide_idx, plane_status_list)
     prs.save('output.pptx')
