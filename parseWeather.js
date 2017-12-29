@@ -40,7 +40,7 @@ const getPlaneAlert = async () => {
   await page.goto('https://aiss.anws.gov.tw/aes/ext/airspaceNotam2.jsp?userid=18d8c82a7d748d');
   await page.waitFor(3000);
   const img = await page.$('#map');
-  await img.screenshot({ 'path': 'element.png' });
+  await img.screenshot({ 'path': 'plane_alert.png' });
   await browser.close();
 }
 
