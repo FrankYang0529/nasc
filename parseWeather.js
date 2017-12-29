@@ -20,7 +20,6 @@ const getRaderURL = async () => {
 
   await page.goto('http://www.cwb.gov.tw/V7/observe/radar/?type=1');
   const imgSrc = await page.evaluate(() => {
-    // return document.body.querySelector('#viewer2').querySelector('img').src;
     return document.body.querySelector('#viewer2 > img').src;
   })
   await browser.close();
@@ -33,7 +32,7 @@ const downloadImage = async (imgSrc, fileName) => {
   await fs.writeFile(fileName, imgBody);
 }
 
-const getPlaneAlert = async () => {
+const downloadPlaneAlert = async () => {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
 
@@ -44,10 +43,22 @@ const getPlaneAlert = async () => {
   await browser.close();
 }
 
+const getWeatherMetar = async () => {
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+
+  const res = await page.goto('https://aiss.anws.gov.tw/aes/AwsClientMetar?stations=RCKH,RCBS,RCDC,RCFN,RCLY,RCNN,RCQC');
+  const resStr = await res.text();
+  const weatherMetar = resStr.replace(/\\\\\\/g, '').replace(/  /g, ' ').replace(/  /g, ' ');
+  await fs.writeFile('weather_metar.json', weatherMetar, 'utf8');
+  await browser.close();
+}
+
 (async () => {
   const satelliteURL = await getSatelliteURL();
   const raderURL = await getRaderURL();
   await downloadImage(satelliteURL, 'sateelite.jpg');
   await downloadImage(raderURL,'rader.jpg');
-  await getPlaneAlert();
+  await downloadPlaneAlert();
+  await getWeatherMetar();
 })();
