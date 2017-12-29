@@ -1,7 +1,10 @@
 import json
+import os.path
 from pprint import pprint
 
 import chardet
+import requests
+from bs4 import BeautifulSoup
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
@@ -738,6 +741,156 @@ def setup_plane_status(presentation, start_slide_idx, plane_status_list):
         table.cell(1+idx, 10).text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
 
 
+def setup_weather_overview(presentation, start_slide_idx):
+    req = requests.get('http://www.cwb.gov.tw/V7/forecast/txt/w01.htm')
+    req.encoding = 'utf-8'
+    soup = BeautifulSoup(req.text, 'html.parser')
+    paragraph_start_idx = 0
+    paragraph_end_idx = 0
+    paragraph_list = soup.find('pre').string.strip().split()
+    for idx, paragraph in enumerate(paragraph_list):
+        if paragraph.startswith('二、'):
+            paragraph_start_idx = idx
+        elif paragraph.startswith('三、'):
+            paragraph_end_idx = idx
+    weather_overview = ''.join(paragraph_list[paragraph_start_idx : paragraph_end_idx])
+    slide = presentation.slides[start_slide_idx]
+    left = Inches(2.4)
+    top = Inches(1.47)
+    width = Inches(5)
+    height = Inches(3)
+    textBox = slide.shapes.add_textbox(left, top, width, height)
+    textBox.text = weather_overview
+
+
+def setup_weather_img(presentation, start_slide_idx):
+    if os.path.isfile('sateelite.jpg'):
+        slide = presentation.slides[start_slide_idx]
+        left = Inches(2.24)
+        top = Inches(0)
+        width = height = Inches(5.63)
+        slide.shapes.add_picture('sateelite.jpg', left, top, width, height)
+
+    if os.path.isfile('rader.jpg'):
+        slide = presentation.slides[start_slide_idx+1]
+        left = Inches(1.93)
+        top = Inches(0)
+        width = Inches(7.5)
+        height = Inches(5.63)
+        slide.shapes.add_picture('rader.jpg', left, top, width, height)
+
+    if os.path.isfile('plane_alert.png'):
+        slide = presentation.slides[start_slide_idx+4]
+        left = Inches(3.37)
+        top = Inches(0)
+        width = Inches(4.5)
+        height = Inches(5.63)
+        slide.shapes.add_picture('plane_alert.png', left, top, width, height)
+
+
+def setup_weather_metar(presentation, start_slide_idx):
+    if not os.path.isfile('weather_metar.json'):
+        return
+
+    weather_metar_list = json.load(open('weather_metar.json', 'r'))
+    weather_metar_json = { metar['station']: metar['message'] for metar in weather_metar_list}
+    slide = presentation.slides[start_slide_idx]
+    left = Inches(0.01)
+    top = Inches(0.37)
+    width = Inches(10)
+    height = Inches(5)
+    textBox = slide.shapes.add_textbox(left, top, width, height)
+    textBox.text_frame.add_paragraph()
+    textBox.text_frame.paragraphs[0].text = 'RCKH'
+    textBox.text_frame.paragraphs[0].font.size = Pt(24)
+    textBox.text_frame.paragraphs[0].font.color.rgb = RGBColor(0xFF, 0x00, 0x00)
+    textBox.text_frame.paragraphs[0].font.brightness = 0.43
+
+    textBox.text_frame.add_paragraph()
+    textBox.text_frame.paragraphs[1].text = weather_metar_json.get('RCKH', '')
+    textBox.text_frame.paragraphs[1].font.size = Pt(24)
+    textBox.text_frame.paragraphs[1].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+    textBox.text_frame.paragraphs[1].font.brightness = 0
+
+    textBox.text_frame.add_paragraph()
+    textBox.text_frame.paragraphs[2].text = 'RCBS'
+    textBox.text_frame.paragraphs[2].font.size = Pt(24)
+    textBox.text_frame.paragraphs[2].font.color.rgb = RGBColor(0xFF, 0x00, 0x00)
+    textBox.text_frame.paragraphs[2].font.brightness = 0.43
+
+    textBox.text_frame.add_paragraph()
+    textBox.text_frame.paragraphs[3].text = weather_metar_json.get('RCBS', '')
+    textBox.text_frame.paragraphs[3].font.size = Pt(24)
+    textBox.text_frame.paragraphs[3].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+    textBox.text_frame.paragraphs[3].font.brightness = 0
+
+    textBox.text_frame.add_paragraph()
+    textBox.text_frame.paragraphs[4].text = 'RCDC'
+    textBox.text_frame.paragraphs[4].font.size = Pt(24)
+    textBox.text_frame.paragraphs[4].font.color.rgb = RGBColor(0xFF, 0x00, 0x00)
+    textBox.text_frame.paragraphs[4].font.brightness = 0.43
+
+    textBox.text_frame.add_paragraph()
+    textBox.text_frame.paragraphs[5].text = weather_metar_json.get('RCDC', '')
+    textBox.text_frame.paragraphs[5].font.size = Pt(24)
+    textBox.text_frame.paragraphs[5].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+    textBox.text_frame.paragraphs[5].font.brightness = 0
+
+    slide = presentation.slides[start_slide_idx+1]
+    left = Inches(0.01)
+    top = Inches(0.37)
+    width = Inches(10)
+    height = Inches(5)
+    textBox = slide.shapes.add_textbox(left, top, width, height)
+    textBox.text_frame.add_paragraph()
+    textBox.text_frame.paragraphs[0].text = 'RCFN'
+    textBox.text_frame.paragraphs[0].font.size = Pt(24)
+    textBox.text_frame.paragraphs[0].font.color.rgb = RGBColor(0xFF, 0x00, 0x00)
+    textBox.text_frame.paragraphs[0].font.brightness = 0.43
+
+    textBox.text_frame.add_paragraph()
+    textBox.text_frame.paragraphs[1].text = weather_metar_json.get('RCFN', '')
+    textBox.text_frame.paragraphs[1].font.size = Pt(24)
+    textBox.text_frame.paragraphs[1].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+    textBox.text_frame.paragraphs[1].font.brightness = 0
+
+    textBox.text_frame.add_paragraph()
+    textBox.text_frame.paragraphs[2].text = 'RCLY'
+    textBox.text_frame.paragraphs[2].font.size = Pt(24)
+    textBox.text_frame.paragraphs[2].font.color.rgb = RGBColor(0xFF, 0x00, 0x00)
+    textBox.text_frame.paragraphs[2].font.brightness = 0.43
+
+    textBox.text_frame.add_paragraph()
+    textBox.text_frame.paragraphs[3].text = weather_metar_json.get('RCLY', '')
+    textBox.text_frame.paragraphs[3].font.size = Pt(24)
+    textBox.text_frame.paragraphs[3].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+    textBox.text_frame.paragraphs[3].font.brightness = 0
+
+    textBox.text_frame.add_paragraph()
+    textBox.text_frame.paragraphs[4].text = 'RCNN'
+    textBox.text_frame.paragraphs[4].font.size = Pt(24)
+    textBox.text_frame.paragraphs[4].font.color.rgb = RGBColor(0xFF, 0x00, 0x00)
+    textBox.text_frame.paragraphs[4].font.brightness = 0.43
+
+    textBox.text_frame.add_paragraph()
+    textBox.text_frame.paragraphs[5].text = weather_metar_json.get('RCNN', '')
+    textBox.text_frame.paragraphs[5].font.size = Pt(24)
+    textBox.text_frame.paragraphs[5].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+    textBox.text_frame.paragraphs[5].font.brightness = 0
+
+    textBox.text_frame.add_paragraph()
+    textBox.text_frame.paragraphs[6].text = 'RCQC'
+    textBox.text_frame.paragraphs[6].font.size = Pt(24)
+    textBox.text_frame.paragraphs[6].font.color.rgb = RGBColor(0xFF, 0x00, 0x00)
+    textBox.text_frame.paragraphs[6].font.brightness = 0.43
+
+    textBox.text_frame.add_paragraph()
+    textBox.text_frame.paragraphs[6].text = weather_metar_json.get('RCQC', '')
+    textBox.text_frame.paragraphs[6].font.size = Pt(24)
+    textBox.text_frame.paragraphs[6].font.color.rgb = RGBColor(0x00, 0x00, 0x00)
+    textBox.text_frame.paragraphs[6].font.brightness = 0
+
+
 if __name__ == '__main__':
     input_encoding = chardet.detect(open('pptx_input.json', 'rb').read())['encoding']
     input_json = json.load(open('pptx_input.json', 'r', encoding=input_encoding))
@@ -745,8 +898,6 @@ if __name__ == '__main__':
     past_missions = input_json['past_missions']
     today_missions = input_json['today_missions']
     plane_status_list = input_json['plane_status_list']
-
-    pprint(plane_status_list)
 
     prs = Presentation('./template.pptx')
     setup_past_missions(prs, past_missions, 'somebody', 'somebody')
@@ -756,4 +907,13 @@ if __name__ == '__main__':
 
     start_plane_status_slide_idx = start_today_slide_idx + cal_num_of_past_missions_slide(today_missions, 6)
     setup_plane_status(prs, start_plane_status_slide_idx, plane_status_list)
+
+    start_weather_overview_slide_idx = start_plane_status_slide_idx + 1
+    setup_weather_overview(prs, start_weather_overview_slide_idx)
+
+    start_weather_img_slide_idx = start_weather_overview_slide_idx + 1
+    setup_weather_img(prs, start_weather_img_slide_idx)
+
+    start_weather_metar_slide_idx = start_weather_img_slide_idx + 2
+    setup_weather_metar(prs, start_weather_metar_slide_idx)
     prs.save('output.pptx')
