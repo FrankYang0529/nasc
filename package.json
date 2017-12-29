@@ -1,0 +1,28 @@
+{
+  "name": "nasc",
+  "version": "1.0.0",
+  "description": "Auto parse web and generate powerpoint to make SMS life easier",
+  "main": "parseWeather.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FrankYang0529/nasc.git"
+  },
+  "keywords": [
+    "SMS"
+  ],
+  "author": "Frank Yang",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/FrankYang0529/nasc/issues"
+  },
+  "homepage": "https://github.com/FrankYang0529/nasc#readme",
+  "dependencies": {
+    "fs-promise": "^2.0.3",
+    "puppeteer": "^0.13.0",
+    "request": "^2.83.0",
+    "request-promise": "^4.2.2"
+  }
+}
