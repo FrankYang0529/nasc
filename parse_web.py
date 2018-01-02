@@ -12,7 +12,8 @@ MISSION_TYPE = {
     '海洋(岸)空偵巡護': 'CG',
     '試車': 'MGR',
     '維護飛行': 'MTF',
-    '救護轉診': 'EMS'
+    '救護轉診': 'EMS',
+    '海上救難': 'SR'
 }
 
 
@@ -63,8 +64,14 @@ def parse_time(htm, past_missions):
         start_time = tr_soup.find_all('span', {'class': 'DropDownList'})[2].string.strip().replace(':', '')
         end_time = tr_soup.find_all('span', {'class': 'DropDownList'})[5].string.strip().replace(':', '')
 
-        mission_idx = next(
-            idx for (idx, m) in enumerate(past_missions) if m['plane-num'] == plane_num and m['zh_type'] == zh_type and m['time'] == origin_time)
+        mission_idx = None
+        for idx, m in enumerate(past_missions):
+            if m['plane-num'] == plane_num and m['zh_type'] == zh_type and m['time'] == origin_time:
+                mission_idx = idx
+                break
+
+        if not mission_idx:
+            continue
         past_missions[mission_idx]['time'] = f'{start_time} - {end_time}'
 
     return past_missions
