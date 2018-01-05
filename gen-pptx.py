@@ -1,6 +1,7 @@
 import json
 import os.path
 from pprint import pprint
+from datetime import datetime
 
 import chardet
 import requests
@@ -12,6 +13,21 @@ from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 
 from operateSlide import move_slide, duplicate_slide
 from mergeCell import mergeCellsVertically, mergeCellsHorizontally, mergeCells
+
+
+def setup_date(presentation):
+    slide = presentation.slides[0]
+    date = datetime.now()
+    shape = slide.shapes[2]
+    shape.text_frame.clear()
+
+    shape.text_frame.paragraphs[0].add_run()
+    shape.text_frame.paragraphs[0].runs[0].text = f'日期：{date.year}年{date.month}月{date.day}日'
+    shape.text_frame.paragraphs[0].runs[0].font.name = 'DFKai-SB'
+    shape.text_frame.paragraphs[0].runs[0].font.size = Pt(28)
+    shape.text_frame.paragraphs[0].runs[0].font.bold = True
+    shape.text_frame.paragraphs[0].runs[0].font.color.rgb = RGBColor(0x00, 0x70, 0xC0)
+    shape.text_frame.paragraphs[0].runs[0].font.brightness = -0.35
 
 
 def setup_presentor(presentation, presenter):
@@ -899,8 +915,13 @@ if __name__ == '__main__':
     today_missions = input_json['today_missions']
     plane_status_list = input_json['plane_status_list']
 
+    host = input('主持人： ')
+    presenter = input('提示人： ')
+
     prs = Presentation('./template.pptx')
-    setup_past_missions(prs, past_missions, 'somebody', 'somebody')
+    setup_date(prs)
+    setup_presentor(prs, presenter)
+    setup_past_missions(prs, past_missions, host, presenter)
 
     start_today_slide_idx = 2 + cal_num_of_past_missions_slide(past_missions, 3)
     setup_today_missions(prs, start_today_slide_idx, today_missions)
