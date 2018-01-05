@@ -1,5 +1,6 @@
 import chardet
 import json
+import logging
 from bs4 import BeautifulSoup
 
 
@@ -70,8 +71,10 @@ def parse_time(htm, past_missions):
                 mission_idx = idx
                 break
 
-        if not mission_idx:
+        if mission_idx == None:
+            logging.warning(f'Missing time: {plane_num} {zh_type} {origin_time} {start_time} - {end_time}')
             continue
+
         past_missions[mission_idx]['time'] = f'{start_time} - {end_time}'
 
     return past_missions
