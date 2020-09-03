@@ -21,7 +21,7 @@
   "homepage": "https://github.com/FrankYang0529/nasc#readme",
   "dependencies": {
     "fs-promise": "^2.0.3",
-    "puppeteer": "^0.13.0",
+    "puppeteer": "^5.2.1",
     "request": "^2.83.0",
     "request-promise": "^4.2.2"
   }
